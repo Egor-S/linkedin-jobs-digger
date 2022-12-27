@@ -3,7 +3,7 @@ from typing import Optional, List
 import requests
 
 from .parser import LinkedInJobsParser
-from .models import JobPosting
+from .models import JobPosting, JobDescription
 
 
 class LinkedInJobsAPI:
@@ -24,3 +24,8 @@ class LinkedInJobsAPI:
             params['f_TPR'] = f"r{age}"
         r = self.s.get(url, params=params)
         return self.parser.get_job_postings(r.text)
+
+    def get_job_description(self, job_id: str) -> JobDescription:
+        url = self.get_url(f"/jobs-guest/jobs/api/jobPosting/{job_id}")
+        r = self.s.get(url)
+        return self.parser.get_job_description(r.text)

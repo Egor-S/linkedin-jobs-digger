@@ -5,11 +5,18 @@ from pathlib import Path
 from typing import Optional, List
 
 import bs4
+import htmlmin
 
-from .models import JobPosting
+from .models import JobPosting, JobDescription
 
 
 re_job_url_id = re.compile(r"-(\d+)\?")
+criteria_names = {
+    "Seniority level": 'seniority',
+    "Employment type": 'type',
+    "Job function": 'function',
+    "Industries": 'industries'
+}
 
 
 def cache_data(fn):
@@ -48,3 +55,19 @@ class LinkedInJobsParser:
             )
             jobs.append(job)
         return jobs
+
+    @cache_data
+    def get_job_description(self, data: str) -> JobDescription:
+        soup = bs4.BeautifulSoup(data, 'html.parser')
+        criteria = {}
+        item: bs4.Tag
+        for item in soup.select('li.description__job-criteria-item'):
+            key = self._node_text(item, 'h3.description__job-criteria-subheader')
+            value = self._node_text(item, 'span.description__job-criteria-text')
+            criteria[criteria_names.get(key, key)] = value
+        text = htmlmin.minify(
+            soup.select_one('div.description__text div.show-more-less-html__markup').prettify(),
+            remove_empty_space=True
+        )
+        description = JobDescription(**criteria, text=text)
+        return description
