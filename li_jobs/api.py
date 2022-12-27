@@ -1,3 +1,4 @@
+import logging
 from typing import Optional, List
 
 import requests
@@ -7,10 +8,20 @@ from .models import JobPosting, JobDescription
 
 
 class LinkedInJobsAPI:
-    def __init__(self, endpoint: str = 'https://www.linkedin.com', parser: Optional[LinkedInJobsParser] = None):
+    def __init__(
+            self, endpoint: str = 'https://www.linkedin.com',
+            parser: Optional[LinkedInJobsParser] = None,
+            logger: Optional[logging.Logger] = None
+    ):
         self.s = requests.session()
         self.endpoint = endpoint.rstrip('/')
         self.parser = parser if parser is not None else LinkedInJobsParser()
+        self.logger = logger if logger is not None else logging.getLogger(__name__)
+
+    def _request(self, method: str, *args, **kwargs) -> requests.Response:
+        r = self.s.request(method, *args, **kwargs)
+        self.logger.info(f"{r.status_code} - {r.url} - {r.elapsed.microseconds // 1000}ms")
+        return r
 
     def get_url(self, path: str) -> str:
         return f"{self.endpoint}/{path.lstrip('/')}"
@@ -22,10 +33,10 @@ class LinkedInJobsAPI:
         params = {'keywords': keywords, 'location': location, 'start': start}
         if age is not None:
             params['f_TPR'] = f"r{age}"
-        r = self.s.get(url, params=params)
+        r = self._request('GET', url, params=params)
         return self.parser.get_job_postings(r.text)
 
     def get_job_description(self, job_id: str) -> JobDescription:
         url = self.get_url(f"/jobs-guest/jobs/api/jobPosting/{job_id}")
-        r = self.s.get(url)
+        r = self._request('GET', url)
         return self.parser.get_job_description(r.text)
