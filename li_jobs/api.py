@@ -5,20 +5,25 @@ import requests
 
 from .parser import LinkedInJobsParser
 from .models import JobPosting, JobDescription
+from .barrier import FrequencyBarrier
 
 
 class LinkedInJobsAPI:
     def __init__(
             self, endpoint: str = 'https://www.linkedin.com',
             parser: Optional[LinkedInJobsParser] = None,
-            logger: Optional[logging.Logger] = None
+            logger: Optional[logging.Logger] = None,
+            rpm_limit: Optional[int] = None,
+            min_delay: float = 0.0
     ):
         self.s = requests.session()
         self.endpoint = endpoint.rstrip('/')
         self.parser = parser if parser is not None else LinkedInJobsParser()
         self.logger = logger if logger is not None else logging.getLogger(__name__)
+        self.barrier = FrequencyBarrier(rpm_limit, min_delay)
 
     def _request(self, method: str, *args, **kwargs) -> requests.Response:
+        self.barrier.wait()
         r = self.s.request(method, *args, **kwargs)
         self.logger.info(f"{r.status_code} - {r.url} - {r.elapsed.microseconds // 1000}ms")
         return r
