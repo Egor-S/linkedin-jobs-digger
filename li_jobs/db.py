@@ -18,7 +18,7 @@ class JobsDB:
             )
             con.execute(
                 "CREATE TABLE IF NOT EXISTS descriptions"
-                "(id TEXT PRIMARY KEY, seniority TEXT, type TEXT, function TEXT, industries TEXT, text TEXT)"
+                "(id TEXT PRIMARY KEY, type TEXT, text TEXT, seniority TEXT, function TEXT, industries TEXT)"
             )
 
     def insert_jobs(self, jobs: List[JobPosting]):
@@ -33,13 +33,13 @@ class JobsDB:
             d = dataclasses.asdict(description)
             d.update({'id': job_id})
             con.execute(
-                "INSERT OR IGNORE INTO descriptions (id, seniority, type, function, industries, text)"
-                "VALUES (:id, :seniority, :type, :function, :industries, :text)", d
+                "INSERT OR IGNORE INTO descriptions (id, type, text, seniority, function, industries)"
+                "VALUES (:id, :type, :text, :seniority, :function, :industries)", d
             )
 
     def get_description(self, job_id: str) -> Optional[JobDescription]:
         with self.c as con:
-            cur = con.execute("SELECT seniority, type, function, industries, text FROM descriptions WHERE id=?", (job_id,))
+            cur = con.execute("SELECT type, text, seniority, function, industries FROM descriptions WHERE id=?", (job_id,))
             r = cur.fetchone()
         if r is None:
             return None

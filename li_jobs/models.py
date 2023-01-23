@@ -5,11 +5,11 @@ from typing import Optional
 
 @dataclass
 class JobDescription:
-    seniority: str
     type: str
-    function: str
-    industries: str
     text: str
+    seniority: Optional[str] = None
+    function: Optional[str] = None
+    industries: Optional[str] = None
 
 
 @dataclass

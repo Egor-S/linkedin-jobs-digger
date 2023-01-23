@@ -1,5 +1,5 @@
 import logging
-from typing import Optional, List
+from typing import Optional, List, Iterator
 
 import requests
 
@@ -45,3 +45,16 @@ class LinkedInJobsAPI:
         url = self.get_url(f"/jobs-guest/jobs/api/jobPosting/{job_id}")
         r = self._request('GET', url)
         return self.parser.get_job_description(r.text)
+
+    def iter_all_job_postings(
+            self, keywords: str, location: str, age: Optional[int] = None, limit: int = 1000
+    ) -> Iterator[JobPosting]:
+        batch_size = 25
+        start = 0
+        while start < limit:
+            batch = self.get_job_postings(keywords, location, age=age, start=start)
+            for job in batch:
+                yield job
+            start += len(batch)
+            if len(batch) < batch_size:
+                break

@@ -2,7 +2,7 @@ import re
 import datetime
 from functools import wraps
 from pathlib import Path
-from typing import Optional, List
+from typing import Union, List
 
 import bs4
 import htmlmin
@@ -24,7 +24,7 @@ def cache_data(fn):
     def wrapper(self, data: str, *args, **kwargs):
         if self.cache_dir:
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            filepath: Path = self.cache_dir / 'raw' / f"{timestamp}-{fn.__name__}.txt"
+            filepath: Path = Path(self.cache_dir) / 'raw' / f"{timestamp}-{fn.__name__}.txt"
             filepath.parent.mkdir(parents=True, exist_ok=True)
             with filepath.open('w') as f:
                 f.write(data)
@@ -33,7 +33,7 @@ def cache_data(fn):
 
 
 class LinkedInJobsParser:
-    def __init__(self, cache_dir: Optional[Path] = None):
+    def __init__(self, cache_dir: Union[Path, str, None] = None):
         self.cache_dir = cache_dir
 
     @staticmethod
@@ -46,13 +46,23 @@ class LinkedInJobsParser:
         jobs = []
         card: bs4.Tag
         for card in soup.find_all('li'):
-            job = JobPosting(
-                id=re_job_url_id.search(card.select_one('a.base-card__full-link')['href']).group(1),
-                title=self._node_text(card, 'h3.base-search-card__title'),
-                company=self._node_text(card, 'h4.base-search-card__subtitle > a'),
-                location=self._node_text(card, 'span.job-search-card__location'),
-                date=datetime.date.fromisoformat(card.find('time')['datetime'])
-            )
+            fields = {
+                'title': self._node_text(card, 'h3.base-search-card__title'),
+                'location': self._node_text(card, 'span.job-search-card__location'),
+                'date': datetime.date.fromisoformat(card.find('time')['datetime'])
+            }
+            if card.select_one('a.base-card__full-link') is None:  # private company card
+                job = JobPosting(
+                    id=re_job_url_id.search(card.select_one('a.base-card--link')['href']).group(1),
+                    company=self._node_text(card, 'h4.base-search-card__subtitle'),
+                    **fields
+                )
+            else:  # normal card
+                job = JobPosting(
+                    id=re_job_url_id.search(card.select_one('a.base-card__full-link')['href']).group(1),
+                    company=self._node_text(card, 'h4.base-search-card__subtitle > a'),
+                    **fields
+                )
             jobs.append(job)
         return jobs
 
