@@ -3,6 +3,8 @@ import logging
 import argparse
 from enum import EnumMeta
 
+import requests
+
 from .db import JobsDB
 from .api import LinkedInJobsAPI, ExperienceLevel, WorkType
 from .parser import LinkedInJobsParser
@@ -27,7 +29,6 @@ def resolve_enum(args: argparse.Namespace, arg_name: str, enum: EnumMeta):
     if getattr(args, arg_name) is None:
         return
     setattr(args, arg_name, [enum[i] for i in getattr(args, arg_name)])
-
 
 
 class SearchQuery:
@@ -76,8 +77,10 @@ def main():
     if not args.scan_only:
         for job in jobs:
             if db.get_description(job.id) is None:
-                # could fail if the job posting got unlisted :|
-                db.insert_description(job.id, api.get_job_description(job.id))
+                try:
+                    db.insert_description(job.id, api.get_job_description(job.id))
+                except requests.HTTPError:
+                    pass
 
 
 if __name__ == '__main__':

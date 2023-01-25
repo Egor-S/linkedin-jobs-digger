@@ -67,6 +67,7 @@ class LinkedInJobsAPI:
     def get_job_description(self, job_id: str) -> JobDescription:
         url = self.get_url(f"/jobs-guest/jobs/api/jobPosting/{job_id}")
         r = self._request('GET', url)
+        r.raise_for_status()
         return self.parser.get_job_description(r.text)
 
     def iter_all_job_postings(
