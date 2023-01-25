@@ -1,10 +1,10 @@
 import sys
 import logging
 import argparse
-
+from enum import EnumMeta
 
 from .db import JobsDB
-from .api import LinkedInJobsAPI
+from .api import LinkedInJobsAPI, ExperienceLevel, WorkType
 from .parser import LinkedInJobsParser
 
 
@@ -23,6 +23,13 @@ def build_logger(path: str) -> logging.Logger:
     return logger
 
 
+def resolve_enum(args: argparse.Namespace, arg_name: str, enum: EnumMeta):
+    if getattr(args, arg_name) is None:
+        return
+    setattr(args, arg_name, [enum[i] for i in getattr(args, arg_name)])
+
+
+
 class SearchQuery:
     def __init__(self, s: str):
         self.keywords, self.location = s.rsplit('@', maxsplit=1)
@@ -38,12 +45,18 @@ def main():
     parser.add_argument('--log', default="digger.log")
     parser.add_argument('--rpm-limit', default=10, type=int)
     parser.add_argument('--min-delay', default=3, type=float)
-    parser.add_argument('--age', default=24 * 3600, type=int)
+    parser.add_argument('--age', default=None, type=int)
+    parser.add_argument('--experience-level', nargs='*', choices=[i.name for i in ExperienceLevel])
+    parser.add_argument('--work-type', nargs='*', choices=[i.name for i in WorkType])
     parser.add_argument('--scan-only', action='store_true')
     parser.add_argument('--cache-dir', default=None)
     args = parser.parse_args()
+    resolve_enum(args, 'experience_level', ExperienceLevel)
+    resolve_enum(args, 'work_type', WorkType)
 
     logger = build_logger(args.log)
+    logger.info(args)
+
     li_parser = LinkedInJobsParser(args.cache_dir)
     api = LinkedInJobsAPI(parser=li_parser, logger=logger, rpm_limit=args.rpm_limit, min_delay=args.min_delay)
     db = JobsDB(args.db)
@@ -52,7 +65,10 @@ def main():
     jobs = []
     # scan
     for query in args.query:
-        for job in api.iter_all_job_postings(query.keywords, query.location, age=args.age):
+        for job in api.iter_all_job_postings(
+            query.keywords, query.location, age=args.age,
+            experience=args.experience_level, work_type=args.work_type
+        ):
             jobs.append(job)
             db.insert_jobs([job])
     logger.info(f"Found {len(jobs)} jobs")

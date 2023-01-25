@@ -1,4 +1,5 @@
 import logging
+from enum import Enum
 from typing import Optional, List, Iterator
 
 import requests
@@ -6,6 +7,20 @@ import requests
 from .parser import LinkedInJobsParser
 from .models import JobPosting, JobDescription
 from .barrier import FrequencyBarrier
+
+
+class ExperienceLevel(Enum):
+    Internship = 1
+    Entry = 2
+    Associate = 3
+    MidSenior = 4
+    Director = 5
+
+
+class WorkType(Enum):
+    OnSite = 1
+    Remote = 2
+    Hybrid = 3
 
 
 class LinkedInJobsAPI:
@@ -32,12 +47,20 @@ class LinkedInJobsAPI:
         return f"{self.endpoint}/{path.lstrip('/')}"
 
     def get_job_postings(
-            self, keywords: str, location: str, age: Optional[int] = None, start: int = 0
+            self, keywords: str, location: str,
+            age: Optional[int] = None,
+            experience: Optional[List[ExperienceLevel]] = None,
+            work_type: Optional[List[WorkType]] = None,
+            start: int = 0
     ) -> List[JobPosting]:
         url = self.get_url("/jobs-guest/jobs/api/seeMoreJobPostings/search")
         params = {'keywords': keywords, 'location': location, 'start': start}
         if age is not None:
             params['f_TPR'] = f"r{age}"
+        if experience is not None:
+            params['f_E'] = ','.join(str(i.value) for i in experience)
+        if work_type is not None:
+            params['f_WT'] = ','.join(str(i.value) for i in work_type)
         r = self._request('GET', url, params=params)
         return self.parser.get_job_postings(r.text)
 
@@ -47,12 +70,19 @@ class LinkedInJobsAPI:
         return self.parser.get_job_description(r.text)
 
     def iter_all_job_postings(
-            self, keywords: str, location: str, age: Optional[int] = None, limit: int = 1000
+            self, keywords: str, location: str,
+            age: Optional[int] = None,
+            experience: Optional[List[ExperienceLevel]] = None,
+            work_type: Optional[List[WorkType]] = None,
+            limit: int = 1000
     ) -> Iterator[JobPosting]:
         batch_size = 25
         start = 0
         while start < limit:
-            batch = self.get_job_postings(keywords, location, age=age, start=start)
+            batch = self.get_job_postings(
+                keywords, location, start=start,
+                age=age, experience=experience, work_type=work_type
+            )
             for job in batch:
                 yield job
             start += len(batch)
