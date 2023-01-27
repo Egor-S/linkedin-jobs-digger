@@ -1,4 +1,5 @@
 uvicorn
 fastapi
+pydantic
 langdetect
-beautifulsoup4
+sqlalchemy>=2.0.0
