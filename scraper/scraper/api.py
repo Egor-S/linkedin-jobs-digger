@@ -5,7 +5,7 @@ from typing import Optional, List, Iterator
 import requests
 
 from .parser import LinkedInJobsParser
-from .models import JobPosting, JobDescription
+from .db import JobCard, JobDescription
 from .barrier import FrequencyBarrier
 
 
@@ -52,7 +52,7 @@ class LinkedInJobsAPI:
             experience: Optional[List[ExperienceLevel]] = None,
             work_type: Optional[List[WorkType]] = None,
             start: int = 0
-    ) -> List[JobPosting]:
+    ) -> List[JobCard]:
         url = self.get_url("/jobs-guest/jobs/api/seeMoreJobPostings/search")
         params = {'keywords': keywords, 'location': location, 'start': start}
         if age is not None:
@@ -76,7 +76,7 @@ class LinkedInJobsAPI:
             experience: Optional[List[ExperienceLevel]] = None,
             work_type: Optional[List[WorkType]] = None,
             limit: int = 1000
-    ) -> Iterator[JobPosting]:
+    ) -> Iterator[JobCard]:
         batch_size = 25
         start = 0
         while start < limit:

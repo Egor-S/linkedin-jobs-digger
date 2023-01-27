@@ -6,8 +6,9 @@ from typing import Union, List
 
 import bs4
 import htmlmin
+import langdetect
 
-from .models import JobPosting, JobDescription
+from .db import JobCard, JobDescription
 
 
 re_job_url_id = re.compile(r"-(\d+)\?")
@@ -41,7 +42,7 @@ class LinkedInJobsParser:
         return node.select_one(query).getText().strip()
 
     @cache_data
-    def get_job_postings(self, data: str) -> List[JobPosting]:
+    def get_job_postings(self, data: str) -> List[JobCard]:
         soup = bs4.BeautifulSoup(data, 'html.parser')
         jobs = []
         card: bs4.Tag
@@ -52,13 +53,13 @@ class LinkedInJobsParser:
                 'date': datetime.date.fromisoformat(card.find('time')['datetime'])
             }
             if card.select_one('a.base-card__full-link') is None:  # private company card
-                job = JobPosting(
+                job = JobCard(
                     id=re_job_url_id.search(card.select_one('a.base-card--link')['href']).group(1),
                     company=self._node_text(card, 'h4.base-search-card__subtitle'),
                     **fields
                 )
             else:  # normal card
-                job = JobPosting(
+                job = JobCard(
                     id=re_job_url_id.search(card.select_one('a.base-card__full-link')['href']).group(1),
                     company=self._node_text(card, 'h4.base-search-card__subtitle > a'),
                     **fields
@@ -75,9 +76,8 @@ class LinkedInJobsParser:
             key = self._node_text(item, 'h3.description__job-criteria-subheader')
             value = self._node_text(item, 'span.description__job-criteria-text')
             criteria[criteria_names.get(key, key)] = value
-        text = htmlmin.minify(
-            soup.select_one('div.description__text div.show-more-less-html__markup').prettify(),
-            remove_empty_space=True
-        )
-        description = JobDescription(**criteria, text=text)
+        description_node = soup.select_one('div.description__text div.show-more-less-html__markup')
+        text = htmlmin.minify(description_node.prettify(), remove_empty_space=True)
+        lang = langdetect.detect(description_node.get_text(' ', strip=True))
+        description = JobDescription(**criteria, text=text, lang=lang)
         return description

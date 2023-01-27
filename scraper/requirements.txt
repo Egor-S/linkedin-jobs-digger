@@ -1,3 +1,5 @@
 requests
 beautifulsoup4
 htmlmin
+langdetect
+sqlalchemy>=2.0.0

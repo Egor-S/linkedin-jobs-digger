@@ -1,11 +1,14 @@
 import sys
 import logging
+import datetime
 import argparse
 from enum import EnumMeta
 
 import requests
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
-from .db import JobsDB
+from .db import Base, JobCard
 from .api import LinkedInJobsAPI, ExperienceLevel, WorkType
 from .parser import LinkedInJobsParser
 
@@ -42,8 +45,8 @@ class SearchQuery:
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('query', nargs='+', type=SearchQuery)
-    parser.add_argument('--db', default="jobs.sqlite")
-    parser.add_argument('--log', default="digger.log")
+    parser.add_argument('--db-uri', default="sqlite:///jobs.sqlite")
+    parser.add_argument('--log', default="scraper.log")
     parser.add_argument('--rpm-limit', default=10, type=int)
     parser.add_argument('--min-delay', default=3, type=float)
     parser.add_argument('--age', default=None, type=int)
@@ -60,27 +63,44 @@ def main():
 
     li_parser = LinkedInJobsParser(args.cache_dir)
     api = LinkedInJobsAPI(parser=li_parser, logger=logger, rpm_limit=args.rpm_limit, min_delay=args.min_delay)
-    db = JobsDB(args.db)
-    db.create_tables()
 
-    jobs = []
+    engine = create_engine(args.db_uri)
+    Session = sessionmaker(engine)
+    Base.metadata.create_all(bind=engine)
+
+    found_jobs = 0
+    job_ids = []
     # scan
     for query in args.query:
         for job in api.iter_all_job_postings(
             query.keywords, query.location, age=args.age,
             experience=args.experience_level, work_type=args.work_type
         ):
-            jobs.append(job)
-            db.insert_jobs([job])
-    logger.info(f"Found {len(jobs)} jobs")
+            with Session() as session:
+                if q := session.get(JobCard, job.id):
+                    job = q
+                    job.last_seen = datetime.datetime.utcnow()
+                else:
+                    session.add(job)
+                found_jobs += 1
+                if job.description is None:
+                    job_ids.append(job.id)
+                session.commit()
+    logger.info(f"Found {found_jobs} jobs")
+
     # fetch descriptions
     if not args.scan_only:
-        for job in jobs:
-            if db.get_description(job.id) is None:
-                try:
-                    db.insert_description(job.id, api.get_job_description(job.id))
-                except requests.HTTPError:
-                    pass
+        logger.info(f"Fetching descriptions for {len(job_ids)} jobs")
+        for job_id in job_ids:
+            with Session() as session:
+                job = session.get(JobCard, job_id)
+                if job.description is None:
+                    try:
+                        job.description = api.get_job_description(job.id)
+                        session.add(job)
+                        session.commit()
+                    except requests.HTTPError:
+                        pass
 
 
 if __name__ == '__main__':
