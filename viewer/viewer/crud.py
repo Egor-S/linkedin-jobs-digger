@@ -8,7 +8,10 @@ from .database import JobCard, JobDescription
 
 def list_jobs(db: Session):  # -> List[JobCard]:
     return db.scalars(
-        select(JobCard).join(JobDescription).filter(JobDescription.lang == 'en')
+        select(JobCard).join(JobDescription).filter(
+            JobDescription.lang == 'en',
+            JobDescription.contains_keywords(['python'])
+        )
     ).all()
 
 

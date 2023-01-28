@@ -10,10 +10,10 @@
         }
         .jobs-list {
             min-width: 400px;
-            overflow-y: scroll;
+            overflow-y: auto;
         }
         .view-pane {
-            overflow-y: scroll;
+            overflow-y: auto;
         }
         .job-card {
             margin: 5px;
@@ -28,6 +28,11 @@
 <body>
     <div id="app">
         <div class="jobs-list">
+            <div v-show="!jobs.length" class="job-card active">
+                <ul>
+                    <li>No results</li>
+                </ul>
+            </div>
             <div v-for="job in jobs" class="job-card" :class="{active: job.id === activeJob?.id}" :key="job.id" @click="getJobDescription(job.id)">
                 <ul>
                     <li><a :href="getJobURL(job.id)" target="_blank">{{ job.title }}</a></li>
