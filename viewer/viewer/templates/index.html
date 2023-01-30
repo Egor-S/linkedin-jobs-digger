@@ -1,0 +1,34 @@
+<html lang="en">
+<head>
+    <title>LI Jobs Digger</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link rel="stylesheet" type="text/css" href="/static/app.css">
+</head>
+<body>
+    <div id="app">
+        <div class="jobs-list">
+            <div v-show="!jobs.length" class="job-card active">
+                <ul>
+                    <li>No results</li>
+                </ul>
+            </div>
+            <div v-for="job in jobs" class="job-card" :class="{active: job.id === activeJob?.id}" :key="job.id" @click="getJobDescription(job.id)">
+                <ul>
+                    <li><a :href="getJobURL(job.id)" target="_blank">{{ job.title }}</a></li>
+                    <li>{{ job.company }}</li>
+                    <li>{{ job.location }}</li>
+                    <li>{{ job.date }}</li>
+                </ul>
+            </div>
+        </div>
+        <div class="view-pane">
+            <div v-html="activeJob?.description?.text"></div>
+        </div>
+    </div>
+    <script type="module">
+        const { createApp } = Vue
+        import ViewerApp from '/static/app.js'
+        createApp(ViewerApp).mount('#app')
+    </script>
+</body>
+</html>

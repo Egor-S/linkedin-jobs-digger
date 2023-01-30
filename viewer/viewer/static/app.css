@@ -1,0 +1,24 @@
+#app {
+    display: flex;
+    width: 100%;
+    height: 100%;
+}
+
+.jobs-list {
+    min-width: 400px;
+    overflow-y: auto;
+}
+
+.view-pane {
+    overflow-y: auto;
+}
+
+.job-card {
+    margin: 5px;
+    padding: 2px;
+    background-color: #efefef;
+}
+
+.job-card.active {
+    background-color: #e3f4ff;
+}
