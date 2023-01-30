@@ -1,10 +1,12 @@
+import PageCache from "./page-cache.js";
+
 export default {
     data() {
         return {
-            query: {
-                date_from: '',
-                date_till: ''
-            },
+            query: PageCache.get('query', {
+                date_till: '',
+                date_from: ''
+            }),
             jobs: [],
             activeJob: undefined
         }
@@ -25,8 +27,9 @@ export default {
     },
     watch: {
         query: {
-            handler(newQuery, oldQuery) {
+            handler(query) {
                 this.getJobsList()
+                PageCache.put('query', query)
             },
             deep: true
         }
