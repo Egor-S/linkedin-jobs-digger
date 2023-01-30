@@ -1,6 +1,6 @@
 export default {
     _key(key) {
-        return `${window.location.href}@${key}`
+        return `${window.location.pathname}@${key}`
     },
     put(key, value) {
         window.localStorage.setItem(this._key(key), JSON.stringify(value))
