@@ -8,7 +8,7 @@ from .dependencies import QueryParams
 
 
 def list_jobs(query: QueryParams, db: Session):  # -> List[JobCard]:
-    filters = [JobDescription.lang == 'en', JobDescription.contains_keywords(['python'])]
+    filters = [JobDescription.lang == 'en', JobDescription.contains_keywords([query.keyword])]
     if query.date_from is not None:
         filters.append(JobCard.date >= query.date_from)
     if query.date_till is not None:

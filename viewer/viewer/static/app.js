@@ -5,7 +5,8 @@ export default {
         return {
             query: PageCache.get('query', {
                 date_till: '',
-                date_from: ''
+                date_from: '',
+                keyword: ''
             }),
             jobs: [],
             activeJob: undefined

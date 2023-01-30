@@ -24,9 +24,10 @@ class EmptyString(str):
 
 class QueryParams:
     def __init__(
-            self,
+            self, keyword: str = Query(default=''),
             date_from: Union[None, datetime.date, EmptyString] = Query(default=None),
             date_till: Union[None, datetime.date, EmptyString] = Query(default=None),
     ):
+        self.keyword = keyword
         self.date_from = date_from
         self.date_till = date_till
