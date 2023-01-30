@@ -6,23 +6,31 @@
 </head>
 <body>
     <div id="app">
-        <div class="jobs-list">
-            <div v-show="!jobs.length" class="job-card active">
-                <ul>
-                    <li>No results</li>
-                </ul>
-            </div>
-            <div v-for="job in jobs" class="job-card" :class="{active: job.id === activeJob?.id}" :key="job.id" @click="getJobDescription(job.id)">
-                <ul>
-                    <li><a :href="getJobURL(job.id)" target="_blank">{{ job.title }}</a></li>
-                    <li>{{ job.company }}</li>
-                    <li>{{ job.location }}</li>
-                    <li>{{ job.date }}</li>
-                </ul>
+        <div class="query">
+            <div>
+                <label>From <input type="date" v-model="query.date_from"></label>
+                <label> till <input type="date" v-model="query.date_till"></label>
             </div>
         </div>
-        <div class="view-pane">
-            <div v-html="activeJob?.description?.text"></div>
+        <div class="viewer">
+            <div class="jobs-list">
+                <div v-show="!jobs.length" class="job-card active">
+                    <ul>
+                        <li>No results</li>
+                    </ul>
+                </div>
+                <div v-for="job in jobs" class="job-card" :class="{active: job.id === activeJob?.id}" :key="job.id" @click="getJobDescription(job.id)">
+                    <ul>
+                        <li><a :href="getJobURL(job.id)" target="_blank">{{ job.title }}</a></li>
+                        <li>{{ job.company }}</li>
+                        <li>{{ job.location }}</li>
+                        <li>{{ job.date }}</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="view-pane">
+                <div v-html="activeJob?.description?.text"></div>
+            </div>
         </div>
     </div>
     <script type="module">

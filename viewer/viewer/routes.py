@@ -9,12 +9,12 @@ from . import crud
 from .main import app
 from .schemas import JobShort, JobFull
 from .config import MODULE_ROOT
-from .dependencies import get_db
+from .dependencies import get_db, QueryParams
 
 
 @app.get("/api/jobs")
-def list_jobs(db: Session = Depends(get_db)) -> List[JobShort]:
-    return crud.list_jobs(db)
+def list_jobs(query: QueryParams = Depends(), db: Session = Depends(get_db)) -> List[JobShort]:
+    return crud.list_jobs(query, db)
 
 
 @app.get("/api/jobs/{job_id}")
