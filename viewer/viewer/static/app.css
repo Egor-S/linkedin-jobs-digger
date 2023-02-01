@@ -21,6 +21,7 @@
 
 .view-pane {
     overflow-y: auto;
+    position: relative;
 }
 
 .job-card {
@@ -31,4 +32,34 @@
 
 .job-card.active {
     background-color: #e3f4ff;
+}
+
+.selection-tooltip {
+    display: flex;
+    position: absolute;
+    visibility: hidden;
+    padding: 2px;
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 4px;
+}
+
+.selection-tooltip.visible {
+    visibility: visible;
+}
+
+.flag {
+    display: block;
+    height: 20px;
+    width: 20px;
+    padding: 2px;
+    mask: url(icons/flag-fill.svg) no-repeat center/20px;
+    -webkit-mask: url(icons/flag-fill.svg) no-repeat center/20px;
+}
+
+.view-pane span.positive {
+    background-color: lightgreen;
+}
+
+.view-pane span.negative {
+    background-color: lightcoral;
 }

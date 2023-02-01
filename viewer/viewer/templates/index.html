@@ -29,8 +29,12 @@
                     </ul>
                 </div>
             </div>
-            <div class="view-pane">
-                <div v-html="activeJob?.description?.text"></div>
+            <div @mouseup="selectionUpdate" ref="viewPane" class="view-pane">
+                <div :class="{visible: selection.active}" :style="selection.tooltipStyle" ref="selectionTooltip" class="selection-tooltip">
+                    <span @mousedown="createFlag(false)" class="flag negative"></span>
+                    <span @mousedown="createFlag(true)" class="flag positive"></span>
+                </div>
+                <div v-html="jobDescriptionHTML"></div>
             </div>
         </div>
     </div>
