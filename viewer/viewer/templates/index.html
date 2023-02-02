@@ -1,40 +1,53 @@
 <html lang="en">
 <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LI Jobs Digger</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <link rel="stylesheet" type="text/css" href="/static/app.css">
 </head>
-<body>
-    <div id="app">
-        <div class="query">
-            <div>
-                <label>From <input type="date" v-model="query.date_from"></label>
-                <label> till <input type="date" v-model="query.date_till"></label>
-                <label> keyword <input v-model="query.keyword"></label>
-            </div>
-        </div>
-        <div class="viewer">
-            <div class="jobs-list">
-                <div v-show="!jobs.length" class="job-card active">
-                    <ul>
-                        <li>No results</li>
-                    </ul>
+<body class="relative bg-slate-100">
+    <div id="app" class="flex flex-col h-full">
+        <header class="flex items-center fixed top-0 z-20 w-full bg-slate-800 h-12 py-4 px-2 text-slate-200">
+            <input class="px-1 bg-slate-600 rounded" type="date" v-model="query.date_from">
+            <span class="mx-1">&mdash;</span>
+            <input class="px-1 bg-slate-600 rounded" type="date" v-model="query.date_till">
+            <input class="px-1 bg-slate-600 rounded ml-4" type="text" placeholder="keyword" v-model="query.keyword">
+        </header>
+        <div class="flex h-full pt-12">
+            <aside class="basis-1/3 overflow-y-auto divide-y divide-slate-200 text-slate-800">
+                <div v-if="!jobs.length" class="m-4">
+                    <span>No results</span>
                 </div>
-                <div v-for="job in jobs" class="job-card" :class="{active: job.id === activeJob?.id}" :key="job.id" @click="getJobDescription(job.id)">
+                <div v-for="job in jobs" class="p-2" :class="{'bg-slate-200': job.id === activeJob?.id}" :key="job.id" @click="getJobDescription(job.id)">
                     <ul>
-                        <li><a :href="getJobURL(job.id)" target="_blank">{{ job.title }}</a></li>
+                        <li><a class="underline" :class="{'text-blue-500': job.id === activeJob?.id}" :href="getJobURL(job.id)" target="_blank">{{ job.title }}</a></li>
                         <li>{{ job.company }}</li>
                         <li>{{ job.location }}</li>
-                        <li>{{ job.date }}</li>
+                        <li class="text-sm text-slate-400">{{ job.date }}</li>
                     </ul>
                 </div>
-            </div>
-            <div @mouseup="selectionUpdate" ref="viewPane" class="view-pane">
-                <div :class="{visible: selection.active}" :style="selection.tooltipStyle" ref="selectionTooltip" class="selection-tooltip">
-                    <span @mousedown="createFlag(false)" class="flag negative"></span>
-                    <span @mousedown="createFlag(true)" class="flag positive"></span>
+            </aside>
+            <div class="basis-2/3 bg-white text-slate-800 overflow-y-auto relative px-4" ref="viewPane">
+                <div v-show="activeJob">
+                    <div class="w-full border-b border-slate-200 py-2">
+                        <h1 class="font-bold text-xl pb-2">{{ activeJob?.title }}</h1>
+                        <div class="text-sm flex justify-between">
+                            <span>{{ activeJob?.company }}</span>
+                            <span>{{ activeJob?.description?.seniority }}</span>
+                            <span>{{ activeJob?.location }}</span>
+                            <span class="hover:cursor-help" :title="activeJob?.first_seen">{{ activeJob?.date }}</span>
+                        </div>
+                    </div>
+                    <div class="py-4" @mouseup="selectionUpdate">
+                        <div :class="{visible: selection.active}" :style="selection.tooltipStyle" ref="selectionTooltip" class="selection-tooltip">
+                            <span @mousedown="createFlag(false)" class="flag negative"></span>
+                            <span @mousedown="createFlag(true)" class="flag positive"></span>
+                        </div>
+                        <div class="list-disc list-inside" v-html="jobDescriptionHTML"></div>
+                    </div>
                 </div>
-                <div v-html="jobDescriptionHTML"></div>
             </div>
         </div>
     </div>
