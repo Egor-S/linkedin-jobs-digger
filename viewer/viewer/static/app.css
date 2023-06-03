@@ -9,6 +9,7 @@
 
 .selection-tooltip.visible {
     visibility: visible;
+    z-index: 10;
 }
 
 .flag {
