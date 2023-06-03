@@ -60,6 +60,7 @@ export default {
 
             flags.forEach(({text, positive}) => {
                 let cls = positive ? 'positive' : 'negative'
+                text = text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
                 html = html.replace(new RegExp(`(${text})`, 'gmi'), `<span class="${cls}">\$1</span>`)
             })
             return html
